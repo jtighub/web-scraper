@@ -1,0 +1,74 @@
+from bs4 import BeautifulSoup as soup
+import requests
+
+# web scraping Yahoo Finance for histroical share vlaue of 5 tech compnaies by market cap
+
+ticker_dict = {}
+
+ticker_inp = "AMZN" #input("Ticker: ").upper()
+yahoo_url = f"https://uk.finance.yahoo.com/quote/{ticker_inp}/history?p={ticker_inp}"
+
+# "https://uk.finance.com/quote/{ticker_inp}/history?period1=345427200&period=1660780800&interval=1mo&filter=history&frequency=1d&includeAdjustedClose=true"
+
+html = requests.get(yahoo_url, headers={"User-Agent": "Mozilla/5.0"}).content.decode("utf-8")
+htmlsoup = soup(html, features="html.parser")
+
+# get ticker info
+ticker_full = htmlsoup.find_all("h1", {"class": "D(ib)"})[0].get_text()
+print(ticker_full)
+ticker_caps = ticker_full[ticker_full.find("(")+1:ticker_full.find(")")]
+ticker_org = ticker_full[:ticker_full.find("(")-1]
+
+# get share price info as html (between td tags)
+tds = htmlsoup.find_all("td", {"class": "Py(10px)"})
+
+data = []
+dividends = []
+stock_split = []
+
+# get share price info as text and insert into data as list
+for td in tds:
+    data += [td.get_text()]
+
+for i in data[::1]:
+    if "Dividend" in i:
+        dividend_index = data.index(i)
+        dividends.append(((data[dividend_index-1]), (data[dividend_index])))
+        del data[dividend_index], data[dividend_index-1]
+    elif "Stock split" in i:
+        stock_split_index = data.index(i)
+        stock_split.append(((data[stock_split_index-1]),(data[stock_split_index])))
+        del data[stock_split_index], data[stock_split_index-1]
+
+dates =[]
+open_val = []
+high_val = []
+low_val = []
+close_val = []
+close_val_adj = []
+volume = []
+
+# values is dict of lists
+values = [dates, open_val, high_val, low_val, close_val, close_val_adj, volume]
+# values_tup is a list of tuples
+values_tup = []
+
+for n in range(1, 100):
+    a = (*data[7*n-7:7*n],)
+    values_tup.append(a)
+
+# get data from table of 7 columns
+
+for n in range(7):
+    # for dates(str)
+    if n == 0:
+        for i in data [n::7]:
+            values[n].append(i)
+    # for values (float)
+    else:
+        for i in data [n::7]:
+            # remove comma separators and convert from str to float
+            values[n].append(float(i.replace(",","")))
+
+if stock_split: print("Stock splits: ", stock_split)
+if dividends: print("Dividents: ", dividends)
