@@ -77,6 +77,8 @@ if dividends: print("Dividents: ", dividends)
 # store data in sql3 database
 con = sqlite3.connect("tracking/historic_share_prices.db")
 cur = con.cursor()
+cur.execute(f"DROP TABLE IF EXISTS {ticker_caps}")
+
 
 share_price_details = f"""
     CREATE TABLE IF NOT EXISTS {ticker_caps} (
@@ -90,3 +92,8 @@ share_price_details = f"""
         )"""
 
 cur.execute(share_price_details)
+
+for line in values_tup:
+    cur.execute(f"INSERT INTO {ticker_caps} VALUES(?, ?, ?, ?, ?, ?, ?)", line)
+
+con.commit()
