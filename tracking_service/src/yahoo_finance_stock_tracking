@@ -75,7 +75,7 @@ if stock_split: print("Stock splits: ", stock_split)
 if dividends: print("Dividents: ", dividends)
 
 # store data in sql3 database
-con = sqlite3.connect("tracking/historic_share_prices.db")
+con = sqlite3.connect("tracking_service/historic_share_prices.db")
 cur = con.cursor()
 cur.execute(f"DROP TABLE IF EXISTS {ticker_caps}")
 
